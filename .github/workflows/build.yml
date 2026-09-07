@@ -36,8 +36,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: tg-ws-proxy-sideload
-          path: |
-            *.ipa
-            build/artifacts/*.ipa
-            output/*.ipa
-            .build/**/*.ipa
+          path: dist/*.ipa
