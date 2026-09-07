@@ -2,8 +2,8 @@ name: Sync Rust upstream
 
 on:
   schedule:
-    - cron: "17 4 * * 1"
-  workflow_dispatch:
+    - cron: "17 4 * * 1" # Автоматический запуск каждый понедельник в 04:17 UTC
+  workflow_dispatch: # Возможность запустить руками одной кнопкой
 
 permissions:
   contents: write
@@ -11,16 +11,22 @@ permissions:
 
 jobs:
   sync:
-    runs-on: macos-15
+    runs-on: ubuntu-latest # Переключили на быстрый и стабильный Linux вместо дорогого Mac
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: recursive # Принудительно скачиваем все вложенные субмодули
 
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Sync amurcanov Rust upstream
-        run: ./scripts/sync-rust-upstream.sh
+        run: |
+          # Даем права на запуск скрипту синхронизации
+          chmod +x ./scripts/sync-rust-upstream.sh
+          # Запускаем оригинальный процесс подтягивания апстрима
+          ./scripts/sync-rust-upstream.sh
 
       - name: Check Rust core
         run: cargo check --manifest-path src-wrapper/Cargo.toml --locked
@@ -28,11 +34,12 @@ jobs:
       - name: Create update pull request
         uses: peter-evans/create-pull-request@v7
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           branch: automation/rust-upstream
           delete-branch: true
           commit-message: "chore: sync Rust upstream"
           title: "chore: sync Rust upstream"
           body: |
-            Automated weekly synchronization from `amurcanov/tg-ws-proxy-android`.
+            Автоматическая еженедельная синхронизация Rust-ядра из апстрима `amurcanov/tg-ws-proxy-android`.
 
-            The iOS FFI patch is reapplied and the Rust core is checked before this pull request is created.
+            Патч iOS FFI был автоматически переналожен, и компиляция Rust-ядра успешно проверена перед созданием этого Pull Request.
