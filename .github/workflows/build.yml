@@ -14,7 +14,7 @@ jobs:
       - name: Setup Xcode version
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '15.4'
+          xcode-version: '15.2' # Откатываемся на версию компилятора, под которую писался код
 
       - name: Install Rust iOS Target
         run: rustup target add aarch64-apple-ios
@@ -23,7 +23,9 @@ jobs:
         run: chmod +x build.sh
 
       - name: Run Build Script
-        run: ./build.sh -p side -c none # Собираем для TrollStore/Сайдлоада без расширений
+        env:
+          OTHER_SWIFT_FLAGS: "-strict-concurrency=minimal" # Глушим строгие варнинги Swift Concurrency
+        run: ./build.sh -p side -c none # Собираем для TrollStore/Сайдлоада без ломающихся расширений
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
