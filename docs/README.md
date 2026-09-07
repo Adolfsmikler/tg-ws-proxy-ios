@@ -3,8 +3,10 @@
 <h4 align="center">Local MTProto proxy for Telegram on iOS featuring a Rust core, WidgetKit, Live Activity, and optional Packet Tunnel. Built via GitHub Actions.</h4>
 
 <p align="center">
-  <a href="README.md">Русский</a>
+  <!-- Исправили ссылку: теперь она четко ведет на главный русский файл в корне -->
+  <a href="../README.md">Русский</a>
 </p>
+
 
 <p align="center">
   <a href="LICENSE"><img src="https://shields.io" alt="GPLv3"></a>
