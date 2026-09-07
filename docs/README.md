@@ -83,9 +83,9 @@ The compiled `.ipa` file will be available for download in the **Artifacts** sec
 
 ## 🧬 Origins and Credits
 
-- [Flowseal/tg-ws-proxy](https://github.com) — Original project and core concept;
-- [amurcanov/tg-ws-proxy-android](https://github.com) — Rust core and Android fork used as upstream;
-- [IMDelewer/tg-ws-proxy-ios](https://github.com) — Original iOS wrapper and Apple framework integration.
+- [Flowseal/tg-ws-proxy](https://github.com/Flowseal/tg-ws-proxy) — Original project and core concept;
+- [amurcanov/tg-ws-proxy-android](https://github.com/amurcanov/tg-ws-proxy-android) — Rust core and Android fork used as upstream;
+- [IMDelewer/tg-ws-proxy-ios](https://github.com/reekeer/tg-ws-proxy-ios) — Original iOS wrapper and Apple framework integration.
 
 ---
 
