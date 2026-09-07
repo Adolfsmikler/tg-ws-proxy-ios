@@ -15,17 +15,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Скачиваем полную историю для корректной работы git merge
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Force Init Git Submodules
+      - name: Hard Clone Rust Core (Submodule Bypass)
         run: |
-          # Принудительно регистрируем, сбрасываем и скачиваем субмодули вручную
-          git submodule deinit -f . || true
-          git submodule update --init --recursive --force
+          # 1. Намертво сносим пустую или забагованную папку вендора
+          rm -rf vendor/tg-ws-proxy-android
+          mkdir -p vendor
+          
+          # 2. Вручную качаем чистое оригинальное ядро прямо с Гитхаба автора
+          git clone --depth=1 https://github.com vendor/tg-ws-proxy-android
 
       - name: Sync amurcanov Rust upstream
         run: |
