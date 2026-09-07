@@ -13,13 +13,23 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Update Rust Core from Upstream
+        run: |
+          git submodule update --remote --merge || true
+
       - name: Setup Xcode version
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '16.2.0'
 
-      - name: Patch GlassEffect Bug
-        run: sed -i '' 's/\.glassEffect.*//g' ios/TgWsProxy/UI/GlassTheme.swift
+      - name: Patch GlassEffect and Force Background Audio
+        run: |
+          # 1. Вырезаем ошибку эффекта стекла из интерфейса
+          sed -i '' 's/\.glassEffect.*//g' ios/TgWsProxy/UI/GlassTheme.swift
+          
+          # 2. Принудительно вшиваем в Info.plist фоновый режим аудио (маскировка под плеер)
+          plutil -insert UIBackgroundModes -array ios/TgWsProxy/Info.plist || true
+          plutil -insert UIBackgroundModes.0 -string "audio" ios/TgWsProxy/Info.plist || true
 
       - name: Install Rust iOS Target
         run: rustup target add aarch64-apple-ios
