@@ -7,13 +7,13 @@
   <a href="../README.md">Русский</a>
 </p>
 
-
 <p align="center">
-  <a href="LICENSE"><img src="https://shields.io" alt="GPLv3"></a>
-  <img src="https://shields.io" alt="iOS 17+">
-  <img src="https://shields.io" alt="SwiftUI">
-  <img src="https://shields.io" alt="Rust">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue?style=for-the-badge&logo=gnu&logoColor=white" alt="GPLv3"></a>
+  <img src="https://img.shields.io/badge/iOS-17%2B-black?style=for-the-badge&logo=apple&logoColor=white" alt="iOS 17+">
+  <img src="https://img.shields.io/badge/Swift-SwiftUI-F05138?style=for-the-badge&logo=swift&logoColor=white" alt="SwiftUI">
+  <img src="https://img.shields.io/badge/Core-Rust-000000?style=for-the-badge&logo=rust&logoColor=white" alt="Rust">
 </p>
+
 
 ---
 
