@@ -62,7 +62,9 @@ When attempting to use this app with a free developer account (Free Apple ID) vi
 
 1. **App ID Limit (0 available error):** Building a full version with all extensions enabled (`-c wd,la,cc,vpn`) requires registering multiple unique identifiers with Apple. Due to free account constraints, installation may fail. **Solution:** Use a brand-new, clean Apple ID.
 2. **The "8-Second" Issue (VPN Drop):** If you compile the full version using the `vpn` flag, the app will launch successfully, but traffic will completely die after 8–30 seconds. iOS blocks network setting initialization (`NetworkExtension`) for free certificates and drops the socket. Continuous operation in VPN mode on a free account is **only possible by constantly restarting the app manually**.
-3. **Recommended Stable Mode:** For a seamless experience without drops, compile the project with the **`-c la`** flag (Live Activity only) paired with the background audio player disguise patch (`audio`). Connect Telegram locally by manually pointing your proxy settings to **`127.0.0.1:1443`**.
+3. **Current Experimental Status:** Compiling the project with the **`-c la`** flag (Live Activity) and the background audio player disguise patch (`audio`) allows the app to stay alive longer, but traffic **still eventually fades out and drops** due to aggressive iOS sandbox restrictions on local loopback sockets (`127.0.0.1`). 
+   * *Under development:* We are currently experimenting with a workaround to implement a Swift-based background timer that automatically restarts the socket loop every 7 seconds, preventing iOS from freezing the background connection.
+
 
 ---
 
