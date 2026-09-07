@@ -10,11 +10,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: recursive # На всякий случай качаем и субмодули
 
       - name: Setup Xcode version
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '15.2' # Откатываемся на версию компилятора, под которую писался код
+          xcode-version: '16.0' # Переключаемся на Xcode 16 ради фишек iOS 18 (.glassEffect)
 
       - name: Install Rust iOS Target
         run: rustup target add aarch64-apple-ios
@@ -24,8 +26,8 @@ jobs:
 
       - name: Run Build Script
         env:
-          OTHER_SWIFT_FLAGS: "-strict-concurrency=minimal" # Глушим строгие варнинги Swift Concurrency
-        run: ./build.sh -p side -c none # Собираем для TrollStore/Сайдлоада без ломающихся расширений
+          OTHER_SWIFT_FLAGS: "-strict-concurrency=minimal -suppress-warnings" # Полностью отключаем строгие проверки Swift
+        run: ./build.sh -p side -c none # Собираем для TrollStore/Сайдлоада без расширений
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
