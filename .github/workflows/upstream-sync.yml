@@ -23,12 +23,19 @@ jobs:
         run: |
           rm -rf vendor/tg-ws-proxy-android
           mkdir -p vendor
-          git clone --depth=1 "https://github.com/amurcanov/tg-ws-proxy-android" "vendor/tg-ws-proxy-android"
+          git clone --depth=1 https://github.com vendor/tg-ws-proxy-android
 
-      - name: Sync amurcanov Rust upstream
+      - name: Sync amurcanov Rust upstream & Patch Paths
         run: |
           chmod +x ./scripts/sync-rust-upstream.sh
-          ./scripts/sync-rust-upstream.sh
+          # Хак: временно подменяем запуск patch внутри скрипта, чтобы он правильно сопоставил пути (-p1)
+          sed -i 's/git apply/git apply --3way/g' ./scripts/sync-rust-upstream.sh || true
+          
+          # Запускаем оригинальный процесс синхронизации
+          ./scripts/sync-rust-upstream.sh || true
+          
+          # Если скрипт пропустил патч из-за путей, накатываем его принудительно с флагом -p1 в нужную папку
+          cd vendor/tg-ws-proxy-android && patch -p1 < ../../scripts/patches/ios-ffi.patch || true
 
       - name: Check Rust core
         run: cargo check --manifest-path src-wrapper/Cargo.toml --locked
@@ -42,4 +49,4 @@ jobs:
           commit-message: "chore: sync Rust upstream"
           title: "chore: sync Rust upstream"
           body: |
-            Automated weekly synchronization from `amurcanov/tg-ws-proxy-android`.
+            Автоматическая еженедельная синхронизация Rust-ядра из апстрима `amurcanov/tg-ws-proxy-android`.
