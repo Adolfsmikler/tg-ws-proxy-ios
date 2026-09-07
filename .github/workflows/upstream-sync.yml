@@ -2,8 +2,8 @@ name: Sync Rust upstream
 
 on:
   schedule:
-    - cron: "17 4 * * 1" # Автоматический запуск каждый понедельник в 04:17 UTC
-  workflow_dispatch: # Возможность запустить руками одной кнопкой
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -11,21 +11,25 @@ permissions:
 
 jobs:
   sync:
-    runs-on: ubuntu-latest # Переключили на быстрый и стабильный Linux вместо дорогого Mac
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: recursive # Принудительно скачиваем все вложенные субмодули
+          fetch-depth: 0 # Скачиваем полную историю для корректной работы git merge
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Force Init Git Submodules
+        run: |
+          # Принудительно регистрируем, сбрасываем и скачиваем субмодули вручную
+          git submodule deinit -f . || true
+          git submodule update --init --recursive --force
+
       - name: Sync amurcanov Rust upstream
         run: |
-          # Даем права на запуск скрипту синхронизации
           chmod +x ./scripts/sync-rust-upstream.sh
-          # Запускаем оригинальный процесс подтягивания апстрима
           ./scripts/sync-rust-upstream.sh
 
       - name: Check Rust core
