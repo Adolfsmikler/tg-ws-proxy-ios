@@ -16,7 +16,7 @@ jobs:
       - name: Setup Xcode version
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '16.1.0' # Используем стабильную версию из доступных на сервере
+          xcode-version: '16.2.0' # Переключаемся на Xcode 16.2.0, где есть поддержка .glassEffect()
 
       - name: Install Rust iOS Target
         run: rustup target add aarch64-apple-ios
