@@ -16,7 +16,7 @@ jobs:
       - name: Setup Xcode version
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '16.0' # Переключаемся на Xcode 16 ради фишек iOS 18 (.glassEffect)
+          xcode-version: '16.1.0' # Используем стабильную версию из доступных на сервере
 
       - name: Install Rust iOS Target
         run: rustup target add aarch64-apple-ios
@@ -26,7 +26,7 @@ jobs:
 
       - name: Run Build Script
         env:
-          OTHER_SWIFT_FLAGS: "-strict-concurrency=minimal -suppress-warnings" # Полностью отключаем строгие проверки Swift
+          OTHER_SWIFT_FLAGS: "-strict-concurrency=minimal -suppress-warnings" # Игнорируем строгие правила асинхронности
         run: ./build.sh -p side -c none # Собираем для TrollStore/Сайдлоада без расширений
 
       - name: Upload IPA Artifact
