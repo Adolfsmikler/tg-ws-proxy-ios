@@ -23,7 +23,7 @@ jobs:
         run: |
           rm -rf vendor/tg-ws-proxy-android
           mkdir -p vendor
-          git clone --depth=1 https://github.com vendor/tg-ws-proxy-android
+          git clone --depth=1 https://github.com/amurcanov/tg-ws-proxy-android
 
       - name: Sync amurcanov Rust upstream & Patch Paths
         run: |
