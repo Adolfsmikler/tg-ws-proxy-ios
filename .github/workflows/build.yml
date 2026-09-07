@@ -43,3 +43,48 @@ jobs:
             build/artifacts/*.ipa
             output/*.ipa
             .build/**/*.ipa
+name: Build iOS IPA
+
+on:
+  workflow_dispatch: # Позволяет запускать сборку вручную кнопкой
+
+jobs:
+  build:
+    runs-on: macos-14 # Запускаем на облачном Mac
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive # На всякий случай качаем и субмодули
+
+      - name: Setup Xcode version
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.2.0' # Оставляем самую актуальную версию
+
+      - name: Patch GlassEffect Bug
+        run: |
+          # Вырезаем строки с .glassEffect, из-за которых падает компилятор
+          sed -i '' 's/\.glassEffect.*//g' ios/TgWsProxy/UI/GlassTheme.swift
+
+      - name: Install Rust iOS Target
+        run: rustup target add aarch64-apple-ios
+
+      - name: Make script executable
+        run: chmod +x build.sh
+
+      - name: Run Build Script
+        env:
+          OTHER_SWIFT_FLAGS: "-strict-concurrency=minimal -suppress-warnings" # Игнорируем строгие правила асинхронности
+        run: ./build.sh -p side -c none # Собираем для TrollStore/Сайдлоада без расширений
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tg-ws-proxy-sideload
+          path: |
+            *.ipa
+            build/artifacts/*.ipa
+            output/*.ipa
+            .build/**/*.ipa
