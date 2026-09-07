@@ -21,9 +21,9 @@ jobs:
 
       - name: Sync, Patch and Prepare Rust Core
         run: |
-          # 1. Сносим старое и клонируем ядро заново внутри одной сессии
+          # 1. Очищаем старые данные, создаем точную структуру и клонируем ядро
           rm -rf vendor/tg-ws-proxy-android
-          mkdir -p vendor
+          mkdir -p vendor/tg-ws-proxy-android
           git clone --depth=1 https://github.com/amurcanov/tg-ws-proxy-android
           
           # 2. Накатываем патч совместимости с iOS
@@ -38,7 +38,7 @@ jobs:
           cp vendor/tg-ws-proxy-android/Cargo.toml src-wrapper/Cargo.toml
           cp vendor/tg-ws-proxy-android/Cargo.lock src-wrapper/Cargo.lock
           
-          # 4. Записываем хэш коммита для истории
+          # 4. Записываем хэш коммита для истории апстрима
           cd vendor/tg-ws-proxy-android
           git rev-parse HEAD > ../../src-wrapper/UPSTREAM_COMMIT
           cd ../..
@@ -57,4 +57,4 @@ jobs:
           body: |
             Автоматическая еженедельная синхронизация Rust-ядра из апстрима `amurcanov/tg-ws-proxy-android`.
 
-            Все файлы ядра успешно синхронизированы в src-wrapper, патч iOS FFI наложен, и компиляция проверена.
+            Все файлы ядра успешно синхронизированы в src-wrapper, патч iOS FFI наложен, и компиляция успешно проверена.
