@@ -1,157 +1,106 @@
-<h1 align="center">TG WS Proxy iOS</h1>
+<h1 align="center">TG WS Proxy iOS (Workflow Fix Fork)</h1>
 
-<h4 align="center">A local Telegram MTProto proxy for iOS powered by a Rust core, WidgetKit, Live Activity, and an optional Packet Tunnel.</h4>
+<h4 align="center">Local MTProto proxy for Telegram on iOS featuring a Rust core, WidgetKit, Live Activity, and optional Packet Tunnel. Built via GitHub Actions.</h4>
 
 <p align="center">
-  <a href="../README.md">Русский</a>
+  <a href="README.md">Русский</a>
 </p>
 
 <p align="center">
-  <a href="../LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue?style=for-the-badge&logo=gnu&logoColor=white" alt="GPLv3"></a>
-  <img src="https://img.shields.io/badge/iOS-17%2B-black?style=for-the-badge&logo=apple&logoColor=white" alt="iOS 17+">
-  <img src="https://img.shields.io/badge/Swift-SwiftUI-F05138?style=for-the-badge&logo=swift&logoColor=white" alt="SwiftUI">
-  <img src="https://img.shields.io/badge/Core-Rust-000000?style=for-the-badge&logo=rust&logoColor=white" alt="Rust">
+  <a href="LICENSE"><img src="https://shields.io" alt="GPLv3"></a>
+  <img src="https://shields.io" alt="iOS 17+">
+  <img src="https://shields.io" alt="SwiftUI">
+  <img src="https://shields.io" alt="Rust">
 </p>
 
 ---
 
-**TG WS Proxy iOS** runs the Rust version of TG WS Proxy on iPhone and exposes a local MTProto endpoint to Telegram:
+**TG WS Proxy iOS** runs the Rust version of TG WS Proxy on an iPhone and provides Telegram with a local MTProto endpoint:
 
 ```text
 Telegram → 127.0.0.1:1443 → Rust TG WS Proxy → WSS / Cloudflare → Telegram DC
 ```
 
 > [!CAUTION]
-> **This is experimental networking software. It works, but an invalid Packet Tunnel configuration may completely break device connectivity until the VPN is disabled, the app is reinstalled, or the iPhone is restarted. The project has not received a security audit. Use it at your own risk and never install an IPA from an untrusted source.**
+> **This is an experimental networking tool. It works, but an incorrect Packet Tunnel configuration can completely "kill" the internet connection on your device until you disable the VPN, reinstall the app, or reboot your iPhone. The application has not undergone a security audit. Use it entirely at your own risk and do not install IPAs from untrusted sources.**
+
+---
+
+## 🤖 AI Disclaimer
+> [!NOTE]
+> All build script fixes, Xcode 16.2+ compiler patches, iOS sandbox bypasses, and CI/CD automation setups in this fork were implemented in close collaboration with the **Gemini AI**. While every effort was made to achieve stability, the author is not responsible for any hidden bugs, Rust core memory leaks, or future breakages caused by Apple updates. Use at your own risk!
+
+---
+
+## ⚡ Fork Features (Build Fixes)
+This repository fixes critical compilation errors found in the original project under recent Xcode versions (16.2+), removes the breaking `.glassEffect` UI modifier, and adds automated cloud build scripts via **GitHub Actions** without requiring a physical Mac computer.
 
 ---
 
 ## ✨ Features
 
-- Rust-powered local MTProto proxy;
-- Cloudflare Workers and custom domains;
-- WebSocket pool sizes `2`, `4`, or `6`;
-- traffic, pool, logs, and diagnostics;
-- optional Liquid Glass interface;
-- Live Activity and Dynamic Island through the single `la` component;
-- interactive Home Screen Widget and Control Center toggle;
-- App Intents, Siri Shortcuts, and configuration deep links;
-- Russian and English UI;
-- loopback fallback when Packet Tunnel is unavailable.
+- Local MTProto proxy powered by Rust;
+- Cloudflare Workers, custom domain, and an updateable domain list;
+- WebSocket pool sizes of `2`, `4`, or `6`;
+- Traffic statistics, pool state, logs, and diagnostics;
+- Optional Liquid Glass toggle;
+- Live Activity and Dynamic Island bundled into a single `la` component;
+- Interactive Home Screen Widget;
+- System toggle for Control Center;
+- App Intents and Siri Shortcuts;
+- Deep links for starting, stopping, and configuring;
+- RU/EN user interface;
+- Automatic fallback to loopback mode if the Packet Tunnel is unavailable.
 
 ---
 
-## 🧬 Credits
+## 📦 Sideload Restrictions on a Free Apple ID (Important!)
 
-- [Flowseal/tg-ws-proxy](https://github.com/Flowseal/tg-ws-proxy) — original project and concept;
-- [amurcanov/tg-ws-proxy-android](https://github.com/amurcanov/tg-ws-proxy-android) — Rust core and upstream fork;
-- [Flowseal/tg-ws-proxy issue #389](https://github.com/Flowseal/tg-ws-proxy/issues/389) — FAQ and discussion;
-- [IMDelewer/tg-ws-proxy-ios](https://github.com/IMDelewer/tg-ws-proxy-ios) — iOS application, Apple framework integrations, and build tooling.
+When attempting to use this app with a free developer account (Free Apple ID) via `iloader` or `Sideloadly`, you will encounter the following iOS sandbox limitations:
 
-The Rust source is included as a git submodule under `vendor/tg-ws-proxy-android`. Only the `src/*.rs` files, `Cargo.toml`, and `Cargo.lock` are used. iOS-specific changes are applied through `scripts/patches/ios-ffi.patch`.
-
----
-
-## 📦 Installation variants
-
-| Variant | Bundle ID | Background operation |
-| :--- | :--- | :--- |
-| AltStore / SideStore | `com.delewer.tgwsproxy.altstore` | depends on available entitlements |
-| Sideload / iLoader / TrollStore | `com.delewer.tgwsproxy.sideload` | Packet Tunnel with a compatible signature |
-| LiveContainer | `com.delewer.tgwsproxy.lc` | foreground guest process only |
-| Simulator | `com.delewer.tgwsproxy.sim` | automatic loopback fallback |
-
-A regular iOS application cannot remain active forever in the background. Persistent operation requires `PacketTunnelProvider`, which iOS runs separately from the application UI.
-
-With a free Apple ID, profiles expire after seven days. AltStore may refresh them while AltServer is reachable, but it cannot add missing Network Extension or App Groups entitlements. LiveContainer cannot register embedded app extensions.
+1. **App ID Limit (0 available error):** Building a full version with all extensions enabled (`-c wd,la,cc,vpn`) requires registering multiple unique identifiers with Apple. Due to free account constraints, installation may fail. **Solution:** Use a brand-new, clean Apple ID.
+2. **The "8-Second" Issue (VPN Drop):** If you compile the full version using the `vpn` flag, the app will launch successfully, but traffic will completely die after 8–30 seconds. iOS blocks network setting initialization (`NetworkExtension`) for free certificates and drops the socket. Continuous operation in VPN mode on a free account is **only possible by constantly restarting the app manually**.
+3. **Recommended Stable Mode:** For a seamless experience without drops, compile the project with the **`-c la`** flag (Live Activity only) paired with the background audio player disguise patch (`audio`). Connect Telegram locally by manually pointing your proxy settings to **`127.0.0.1:1443`**.
 
 ---
 
-## 🚀 Build
+## 🚀 Cloud Build (GitHub Actions)
 
-```bash
-rustup target add aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios
-./build.sh -p sim --install
-./build.sh -p sim -c wd,la,cc,vpn --install
-./build.sh -p side -c wd,la,cc,vpn
-./build.sh -p alt
-./build.sh -p lc
-```
+You don't need a Mac or a local Xcode installation. Everything is built in the cloud:
+1. Navigate to the **Actions** tab of your repository.
+2. Select the **Build iOS IPA** workflow.
+3. Click the **Run workflow** button.
 
-Platforms are `sim`, `side`, `alt`, and `lc`.
+You can customize the build flags inside `.github/workflows/build.yml`:
+- `-c la` — Lightweight stable version featuring Live Activity (Recommended).
+- `-c wd,la,cc,vpn` — Full ultimate version (Requires a paid developer account or TrollStore).
 
-Components:
+The compiled `.ipa` file will be available for download in the **Artifacts** section once the build successfully finishes.
 
-| Code | Component |
-| :---: | :--- |
-| `wd` | Home Screen Widget |
-| `la` | Live Activity and Dynamic Island |
-| `cc` | Control Center toggle on iOS 18+ |
-| `vpn` | Packet Tunnel / Network Extension |
-| `none` | application only |
+---
+
+## 🧬 Origins and Credits
+
+- [Flowseal/tg-ws-proxy](https://github.com) — Original project and core concept;
+- [amurcanov/tg-ws-proxy-android](https://github.com) — Rust core and Android fork used as upstream;
+- [IMDelewer/tg-ws-proxy-ios](https://github.com) — Original iOS wrapper and Apple framework integration.
 
 ---
 
 ## 🔗 Deep links
-
 ```text
+tgwsproxy://home
+tgwsproxy://settings
 tgwsproxy://?action=start
 tgwsproxy://?action=stop
-tgwsproxy://?action=update_cf_link
-tgwsproxy://?action=show_cf_domains
-tgwsproxy://?action=add_cf_domain&domain=worker.example.com
-tgwsproxy://?action=clear_cf_domain
-tgwsproxy://?action=config&addr=127.0.0.1&port=1443&pool=4&cf_proxy=true&start=true
 ```
-
----
-
-## 🔄 Upstream automation
-
-Initialize the submodule:
-
-```bash
-git submodule update --init
-```
-
-Sync the Rust wrapper to the current submodule commit:
-
-```bash
-./scripts/sync-rust-upstream.sh
-cargo check --manifest-path src-wrapper/Cargo.toml --locked
-```
-
----
-
-## 📚 Documentation
-
-- [Architecture and how it works (Russian)](ARCHITECTURE.ru.md)
-
----
-
-## 🗂 Structure
-
-```text
-ios/TgWsProxy/App/       app lifecycle, settings, deep links
-ios/TgWsProxy/Logs/      log capture and export
-ios/TgWsProxy/Proxy/     engines, FFI, ActivityKit, intents
-ios/TgWsProxy/UI/        SwiftUI and Liquid Glass
-ios/PacketTunnel/        Network Extension
-ios/StatusWidgets/       widgets, Live Activity, Control Center
-src-wrapper/             Rust working copy (upstream + iOS patch)
-vendor/tg-ws-proxy-android/  upstream Rust repository (submodule)
-scripts/patches/         reproducible iOS FFI patch
-```
+*(The full list of deep links is available in the original project documentation).*
 
 ---
 
 ## ⚖️ Licenses
 
-The combined project and Rust fork are distributed under [GPLv3](../LICENSE). The original Flowseal project contains MIT-licensed work; its license is included as [LICENSE-flowseal](../LICENSE-flowseal).
+- This combined project and all modifications are distributed under the [GPLv3](LICENSE) license.
+- Telegram and Apple names are trademarks of their respective owners. This project is not affiliated with Telegram FZ-LLC or Apple Inc.
 
----
-
-<p align="center">
-  Powered by <a href="https://github.com/Flowseal/tg-ws-proxy">Flowseal/tg-ws-proxy</a>
-  and <a href="https://github.com/amurcanov/tg-ws-proxy-android">amurcanov/tg-ws-proxy-android</a>
-</p>
+<p align="center"><sub>Workflow modification and bugfixes prepared by <a href="https://github.com">Adolfsmikler</a></sub></p>
