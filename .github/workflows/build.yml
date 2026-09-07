@@ -1,0 +1,32 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch: # Позволяет запускать сборку вручную кнопкой
+
+jobs:
+  build:
+    runs-on: macos-14 # Запускаем на облачном Mac
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode version
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.4' # Или '16.0' в зависимости от того, что требует проект
+
+      - name: Make script executable
+        run: chmod +x build.sh
+
+      - name: Run Build Script
+        run: ./build.sh -p side -c none # Собираем для TrollStore/Сайдлоада без ломающихся расширений
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tg-ws-proxy-sideload
+          path: |
+            *.ipa
+            build/artifacts/*.ipa
+            output/*.ipa
