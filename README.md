@@ -80,8 +80,8 @@ Telegram → 127.0.0.1:1443 → Rust TG WS Proxy → WSS / Cloudflare → Telegr
 
 ## 🧬 Происхождение и благодарности
 
-- [Flowseal/tg-ws-proxy]((https://github.com/Flowseal/tg-ws-proxy)) — оригинальный проект и основная идея;
-- [amurcanov/tg-ws-proxy-android]([https://github.com](https://github.com/amurcanov/tg-ws-proxy-android)) — Rust-ядро и Android-форк, используемые как upstream;
+- [Flowseal/tg-ws-proxy](https://github.com/Flowseal/tg-ws-proxy) — оригинальный проект и основная идея;
+- [amurcanov/tg-ws-proxy-android](https://github.com/amurcanov/tg-ws-proxy-android) — Rust-ядро и Android-форк, используемые как upstream;
 - [IMDelewer/tg-ws-proxy-ios](https://github.com/reekeer/tg-ws-proxy-ios) — оригинальная iOS-оболочка и интеграция Apple frameworks.
 
 ---
