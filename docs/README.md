@@ -45,8 +45,8 @@ This fork introduces an **Automated Silent Audio Engine Patch** that completely 
 
 ### ⚠️ Known Trade-offs & Bugs:
 1. **Increased Battery Drain:** Because the audio engine and Rust core run continuously in the background, your phone will consume battery significantly faster [travel].
-2. **Call Conflicts (Crucial Bug):** Making or receiving a cellular call (or VoIP call in other apps) causes iOS to force-mute our fake audio stream [travel]. **Once the call ends, you must manually restart the proxy (press Stop -> Start)** to restore background privileges.
-3. **Media Conflicts:** Music players (Apple Music, YouTube) might briefly suspend the proxy loop when taking over the audio output [travel].
+2. **Audio Session Conflicts (Calls & Recording):** Any action that hijacks the microphone or system audio — such as cellular calls, VoIP calls, or **recording voice notes and video messages ("round videos") in Telegram** — will force-mute our fake audio stream [travel].
+3. **Manual Restart Required:** Once the call ends or the voice/video message is sent, the proxy goes to sleep [travel]. **You must manually restart the proxy (press Stop -> Start)** in the app to restore background privileges.
 
 ---
 
