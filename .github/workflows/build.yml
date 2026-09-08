@@ -21,76 +21,41 @@ jobs:
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '16.2.0'
-      - name: Patch GlassEffect and Inject Silent Audio Engine
+      - name: Patch GlassEffect and Inject Location Hack
         run: |
           # 1. Вырезаем баг эффекта стекла
           sed -i '' 's/\.glassEffect.*//g' ios/TgWsProxy/UI/GlassTheme.swift
           
-          # 2. Вшиваем в Info.plist фоновый режим аудио
+          # 2. Вшиваем в Info.plist фоновый режим локации и описания для запроса прав
           plutil -insert UIBackgroundModes -array ios/TgWsProxy/Info.plist || true
-          plutil -insert UIBackgroundModes.0 -string "audio" ios/TgWsProxy/Info.plist || true
+          plutil -insert UIBackgroundModes.0 -string "location" ios/TgWsProxy/Info.plist || true
+          plutil -insert NSLocationAlwaysAndWhenInUseUsageDescription -string "Keep proxy alive in background" ios/TgWsProxy/Info.plist || true
+          plutil -insert NSLocationWhenInUseUsageDescription -string "Keep proxy alive in background" ios/TgWsProxy/Info.plist || true
           
-          # 3. ХАК: Автоматический поиск и безопасное внедрение генератора тишины
-          cat << 'EOF' > patch_audio.py
+          # 3. ХАК: Автоматический поиск и внедрение генератора геолокации
+          cat << 'EOF' > patch_location.py
           import os
           import re
 
-          audio_code = """
-          import AVFoundation
-          import UIKit
+          location_code = """
+          import CoreLocation
 
-          class SilentAudioEngine {
-              static let shared = SilentAudioEngine()
-              private var engine = AVAudioEngine()
-              private var observer: Any?
-              private var bgTask: UIBackgroundTaskIdentifier = .invalid
+          class BackgroundLocationManager: NSObject, CLLocationManagerDelegate {
+              static let shared = BackgroundLocationManager()
+              private let manager = CLLocationManager()
               
-              init() {
-                  observer = NotificationCenter.default.addObserver(
-                      forName: AVAudioSession.interruptionNotification,
-                      object: nil,
-                      queue: nil
-                  ) { [weak self] notification in
-                      guard let self = self,
-                            let userInfo = notification.userInfo,
-                            let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
-                            let type = AVAudioSession.InterruptionType(rawValue: typeValue) else { return }
-                      
-                      DispatchQueue.main.async {
-                          if type == .began {
-                              self.bgTask = UIApplication.shared.beginBackgroundTask(withName: "KeepAliveTask") {
-                                  UIApplication.shared.endBackgroundTask(self.bgTask)
-                                  self.bgTask = .invalid
-                              }
-                          } else if type == .ended {
-                              try? AVAudioSession.sharedInstance().setActive(true)
-                              try? self.engine.start()
-                              
-                              if self.bgTask != .invalid {
-                                  UIApplication.shared.endBackgroundTask(self.bgTask)
-                                  self.bgTask = .invalid
-                              }
-                          }
-                      }
-                  }
+              override init() {
+                  super.init()
+                  manager.delegate = self
+                  manager.desiredAccuracy = kCLLocationAccuracyKilometer // Минимальная точность для экономии батареи
+                  manager.distanceFilter = 99999 // Реже обновлять
+                  manager.allowsBackgroundLocationUpdates = true
+                  manager.pausesLocationUpdatesAutomatically = false
               }
               
               func start() {
-                  let session = AVAudioSession.sharedInstance()
-                  try? session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
-                  try? session.setActive(true)
-                  
-                  let srcNode = AVAudioSourceNode { _, _, frameCount, audioBufferList -> OSStatus in
-                      let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
-                      for buffer in ablPointer {
-                          memset(buffer.mData, 0, Int(buffer.mDataByteSize))
-                      }
-                      return noErr
-                  }
-                  
-                  engine.attach(srcNode)
-                  engine.connect(srcNode, to: engine.mainMixerNode, format: nil)
-                  try? engine.start()
+                  manager.requestAlwaysAuthorization()
+                  manager.startUpdatingLocation()
               }
           }
           """
@@ -116,21 +81,20 @@ jobs:
           with open(app_file, "r") as f:
               content = f.read()
 
-          # ШАГ 1: Сначала безопасно встраиваем запуск плеера в App
+          # Встраиваем запуск менеджера локации
           if "init()" in content:
-              content = re.sub(r'init\(\)\s*\{', 'init() {\n        SilentAudioEngine.shared.start()\n', content, count=1)
+              content = re.sub(r'init\(\)\s*\{', 'init() {\n        BackgroundLocationManager.shared.start()\n', content, count=1)
           else:
-              content = content.replace("var body: some Scene {", "init() {\n        SilentAudioEngine.shared.start()\n    }\n    var body: some Scene {")
+              content = content.replace("var body: some Scene {", "init() {\n        BackgroundLocationManager.shared.start()\n    }\n    var body: some Scene {")
 
-          # ШАГ 2: Только после этого добавляем класс (чтобы не сломать его внутренний init)
-          content = audio_code + "\n" + content
+          content = location_code + "\n" + content
 
           with open(app_file, "w") as f:
               f.write(content)
-          print("Silent Audio Engine successfully injected into Swift!")
+          print("Location Hack successfully injected into Swift!")
           EOF
           
-          python3 patch_audio.py
+          python3 patch_location.py
       - name: Install Rust iOS Target
         run: rustup target add aarch64-apple-ios
 
