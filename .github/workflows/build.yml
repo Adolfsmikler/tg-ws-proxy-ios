@@ -26,42 +26,26 @@ jobs:
           # 1. Вырезаем баг эффекта стекла
           sed -i '' 's/\.glassEffect.*//g' ios/TgWsProxy/UI/GlassTheme.swift
           
-          # 2. Вшиваем в Info.plist фоновый режим аудио (декларация для Apple)
+          # 2. Вшиваем в Info.plist фоновый режим аудио
           plutil -insert UIBackgroundModes -array ios/TgWsProxy/Info.plist || true
           plutil -insert UIBackgroundModes.0 -string "audio" ios/TgWsProxy/Info.plist || true
           
-          # 3. ХАК: Автоматический поиск главной точки входа и внедрение генератора тишины
+          # 3. ХАК: Автоматический поиск и безопасное внедрение генератора тишины
           cat << 'EOF' > patch_audio.py
           import os
+          import re
 
-          # Код хака на Swift (Генератор тишины через AVAudioEngine)
           audio_code = """
           import AVFoundation
-
-      - name: Patch GlassEffect and Inject Silent Audio Engine
-        run: |
-          # 1. Вырезаем баг эффекта стекла
-          sed -i '' 's/\.glassEffect.*//g' ios/TgWsProxy/UI/GlassTheme.swift
-          
-          # 2. Вшиваем в Info.plist фоновый режим аудио (декларация для Apple)
-          plutil -insert UIBackgroundModes -array ios/TgWsProxy/Info.plist || true
-          plutil -insert UIBackgroundModes.0 -string "audio" ios/TgWsProxy/Info.plist || true
-          
-          # 3. ХАК: Автоматический поиск главной точки входа и внедрение генератора тишины
-          cat << 'EOF' > patch_audio.py
-          import os
-
-          # Код хака на Swift (Генератор тишины через AVAudioEngine + Авторестарт)
-          audio_code = """
-          import AVFoundation
+          import UIKit
 
           class SilentAudioEngine {
               static let shared = SilentAudioEngine()
               private var engine = AVAudioEngine()
               private var observer: Any?
+              private var bgTask: UIBackgroundTaskIdentifier = .invalid
               
               init() {
-                  // Слушаем прерывания (звонки, голосовые, использование микрофона)
                   observer = NotificationCenter.default.addObserver(
                       forName: AVAudioSession.interruptionNotification,
                       object: nil,
@@ -72,10 +56,21 @@ jobs:
                             let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
                             let type = AVAudioSession.InterruptionType(rawValue: typeValue) else { return }
                       
-                      // Если прерывание закончилось, перезапускаем аудио движок
-                      if type == .ended {
-                          try? AVAudioSession.sharedInstance().setActive(true)
-                          try? self.engine.start()
+                      DispatchQueue.main.async {
+                          if type == .began {
+                              self.bgTask = UIApplication.shared.beginBackgroundTask(withName: "KeepAliveTask") {
+                                  UIApplication.shared.endBackgroundTask(self.bgTask)
+                                  self.bgTask = .invalid
+                              }
+                          } else if type == .ended {
+                              try? AVAudioSession.sharedInstance().setActive(true)
+                              try? self.engine.start()
+                              
+                              if self.bgTask != .invalid {
+                                  UIApplication.shared.endBackgroundTask(self.bgTask)
+                                  self.bgTask = .invalid
+                              }
+                          }
                       }
                   }
               }
@@ -97,17 +92,10 @@ jobs:
                   engine.connect(srcNode, to: engine.mainMixerNode, format: nil)
                   try? engine.start()
               }
-              
-              deinit {
-                  if let observer = observer {
-                      NotificationCenter.default.removeObserver(observer)
-                  }
-              }
           }
           """
 
           app_file = None
-          # Ищем файл с главной точкой входа SwiftUI во всем проекте ios/
           for root, dirs, files in os.walk("ios"):
               for file in files:
                   if file.endswith(".swift"):
@@ -128,14 +116,14 @@ jobs:
           with open(app_file, "r") as f:
               content = f.read()
 
-          # Вставляем импорт и класс в начало найденного файла
-          content = audio_code + "\n" + content
-          
-          # Встраиваем запуск плеера в инициализатор
-          if "init(" in content:
-              content = content.replace("init(", "init() {\n        SilentAudioEngine.shared.start()\n    }\n    // patched init(")
+          # ШАГ 1: Сначала безопасно встраиваем запуск плеера в App
+          if "init()" in content:
+              content = re.sub(r'init\(\)\s*\{', 'init() {\n        SilentAudioEngine.shared.start()\n', content, count=1)
           else:
               content = content.replace("var body: some Scene {", "init() {\n        SilentAudioEngine.shared.start()\n    }\n    var body: some Scene {")
+
+          # ШАГ 2: Только после этого добавляем класс (чтобы не сломать его внутренний init)
+          content = audio_code + "\n" + content
 
           with open(app_file, "w") as f:
               f.write(content)
@@ -143,7 +131,6 @@ jobs:
           EOF
           
           python3 patch_audio.py
-
       - name: Install Rust iOS Target
         run: rustup target add aarch64-apple-ios
 
