@@ -33,20 +33,29 @@ Telegram → 127.0.0.1:1443 → Rust TG WS Proxy → WSS / Cloudflare → Telegr
 ---
 
 ## ⚡ Fork Features (What's Fixed)
-This repository fixes critical compilation errors found in the original project under recent Xcode versions (16.2+), removes the breaking `.glassEffect` UI modifier, and adds automated cloud build scripts via **GitHub Actions** without requiring a physical Mac computer.
+This repository fixes critical compilation errors found in the original project under recent Xcode versions (16.2+), removes the breaking `.glassEffect` UI modifier, and adds automated cloud build scripts 
+via **GitHub Actions** without requiring a physical Mac computer.
+## 📦 Free Apple ID Background Sandbox Bypass (Important!)
 
----
+In the original project, background execution on a free developer account was impossible because the system VPN (`NetworkExtension`) dropped after 8 seconds due to missing paid signature entitlements.
 
-## 📦 Free Apple ID Sandbox Bypass (Important!)
+This fork introduces an **Automated Background Location Engine Patch (CoreLocation)** that completely solves this problem without using clunky audio hacks! When building with the **`-c la`** flag, the script automatically injects a background GPS tracker into the Swift code. To iOS, the app looks like an active navigation tool, which prevents process suspension and allows the Rust core to run indefinitely.
 
-In the original project, background execution on a free developer account was impossible because the system VPN (`NetworkExtension`) dropped after 8 seconds due to missing paid signature entitlements [creative-writing-pad].
+### 🚨 CRITICALLY IMPORTANT CONFIGURATION (INSTRUCTIONS):
+To prevent the proxy from sleeping in the background, you must adjust your iOS settings after the first installation:
+1. Open the system **Settings** app on your iPhone.
+2. Scroll down to the app list and select **TgWsProxy**.
+3. Tap on **Location**.
+4. **YOU MUST CHANGE THE PERMISSION TO "ALWAYS"!**
+*If left on "While Using the App", iOS will freeze the proxy process the exact second you minimize the app or lock your screen.*
 
-This fork introduces an **Automated Silent Audio Engine Patch** that completely solves this problem [travel]! When building with the **`-c la`** flag, the script automatically injects an infinite silence generator into the Swift code [travel]. To iOS, the app looks like an active music player, which prevents process suspension and allows the Rust core to run indefinitely [travel]!
+### ✨ Advantages of the GPS Fix Over Audio Hacks:
+- ✅ **Full Call Stability:** Phone calls and VoIP calls in other apps NO LONGER break the proxy loop because iOS location tracking is entirely separated from the audio system.
+- ✅ **Media & Voice Note Stability:** Recording/playing voice messages, "round video notes," and videos in Telegram no longer interrupt the proxy connection.
+- ✅ **True Autonomy:** No manual restarts (Stop/Start) required — the background connection stays alive continuously.
 
-### ⚠️ Known Trade-offs & Bugs:
-1. **Increased Battery Drain:** Because the audio engine and Rust core run continuously in the background, your phone will consume battery significantly faster [travel].
-2. **Audio Session Conflicts (Calls & Recording):** Any action that hijacks the microphone or system audio — such as cellular calls, VoIP calls, or **recording voice notes and video messages ("round videos") in Telegram** — will force-mute our fake audio stream [travel].
-3. **Manual Restart Required:** Once the call ends or the voice/video message is sent, the proxy goes to sleep [travel]. **You must manually restart the proxy (press Stop -> Start)** in the app to restore background privileges.
+### ⚠️ Known Trade-offs:
+1. **Battery Drain:** Continuous background GPS tracking combined with the active Rust core will drain your device's battery significantly faster. It is recommended for devices with healthy battery life or while connected to a power source.
 
 ---
 
