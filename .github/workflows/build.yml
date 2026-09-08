@@ -21,7 +21,6 @@ jobs:
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '16.2.0'
-
       - name: Patch GlassEffect and Inject Silent Audio Engine
         run: |
           # 1. Вырезаем баг эффекта стекла
@@ -31,13 +30,9 @@ jobs:
           plutil -insert UIBackgroundModes -array ios/TgWsProxy/Info.plist || true
           plutil -insert UIBackgroundModes.0 -string "audio" ios/TgWsProxy/Info.plist || true
           
-          # 3. ХАК: Внедряем генератор бесконечной тишины прямо в точку старта приложения (SwiftUI Lifecycle)
+          # 3. ХАК: Автоматический поиск главной точки входа и внедрение генератора тишины
           cat << 'EOF' > patch_audio.py
           import os
-
-          app_file = "ios/TgWsProxy/TgWsProxyApp.swift"
-          with open(app_file, "r") as f:
-              content = f.read()
 
           # Код хака на Swift (Генератор тишины через AVAudioEngine)
           audio_code = """
@@ -68,15 +63,38 @@ jobs:
           }
           """
 
-          # Вставляем импорт и класс в начало файла
-          content = audio_code + "\\n" + content
+          app_file = None
+          # Ищем файл с главной точкой входа SwiftUI во всем проекте ios/
+          for root, dirs, files in os.walk("ios"):
+              for file in files:
+                  if file.endswith(".swift"):
+                      path = os.path.join(root, file)
+                      with open(path, "r", errors="ignore") as f:
+                          content = f.read()
+                      if "@main" in content and "some Scene" in content:
+                          app_file = path
+                          print(f"Found main app file at: {app_file}")
+                          break
+              if app_file:
+                  break
+
+          if not app_file:
+              print("ERROR: Could not find main SwiftUI app file!")
+              exit(1)
+
+          with open(app_file, "r") as f:
+              content = f.read()
+
+          # Вставляем импорт и класс в начало найденного файла
+          content = audio_code + "\n" + content
           
-          # Запускаем плеер при инициализации приложения (в init окна)
-          if "init()" in content:
-              content = content.replace("init() {", "init() {\\n        SilentAudioEngine.shared.start()")
+          # Встраиваем запуск плеера в инициализатор
+          if "init(" in content:
+              # Если init уже есть, вшиваем запуск в начало первой открывающей фигурной скобки
+              content = content.replace("init(", "init() {\n        SilentAudioEngine.shared.start()\n    }\n    // patched init(")
           else:
-              # Если init нет, встраиваем в тело структуры приложения
-              content = content.replace("var body: some Scene {", "init() {\\n        SilentAudioEngine.shared.start()\\n    }\\n    var body: some Scene {")
+              # Если init нет, встраиваем его прямо перед главной сценой body
+              content = content.replace("var body: some Scene {", "init() {\n        SilentAudioEngine.shared.start()\n    }\n    var body: some Scene {")
 
           with open(app_file, "w") as f:
               f.write(content)
@@ -84,6 +102,7 @@ jobs:
           EOF
           
           python3 patch_audio.py
+
 
 
       - name: Install Rust iOS Target
