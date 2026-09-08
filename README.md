@@ -49,6 +49,14 @@ Telegram → 127.0.0.1:1443 → Rust TG WS Proxy → WSS / Cloudflare → Telegr
 3. **Конфликт с медиа:** Музыкальные плееры (Apple Music, YouTube) могут кратковременно приостанавливать работу прокси, если перехватывают аудиоканал [travel].
 
 ---
+## 🧬 Происхождение, источники и благодарности
+
+Этот проект является результатом объединения, модификации и исправления цепочки опенсорс-решений:
+
+- [Flowseal/tg-ws-proxy](https://github.com/Flowseal/tg-ws-proxy) — оригинальная концепция, идея обхода ограничений через WebSocket и базовое ядро прокси.
+- [amurcanov/tg-ws-proxy-android](https://github.com/amurcanov/tg-ws-proxy-android) — активно развиваемый форк Rust-ядра и Android-версия, используемые в данном проекте как upstream для автоматической синхронизации.
+- [reekeer/tg-ws-proxy-ios]([https://github.com/reekeer/tg-ws-proxy-ios) — оригинальная графическая оболочка на Swift/SwiftUI и интеграция нативных фреймворков Apple.
+
 
 ## 🚀 Облачная сборка (GitHub Actions)
 
