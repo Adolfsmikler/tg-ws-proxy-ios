@@ -22,14 +22,69 @@ jobs:
         with:
           xcode-version: '16.2.0'
 
-      - name: Patch GlassEffect and Force Background Audio
+      - name: Patch GlassEffect and Inject Silent Audio Engine
         run: |
-          # 1. Вырезаем ошибку эффекта стекла из интерфейса
+          # 1. Вырезаем баг эффекта стекла
           sed -i '' 's/\.glassEffect.*//g' ios/TgWsProxy/UI/GlassTheme.swift
           
-          # 2. Принудительно вшиваем в Info.plist фоновый режим аудио (маскировка под плеер)
+          # 2. Вшиваем в Info.plist фоновый режим аудио (декларация для Apple)
           plutil -insert UIBackgroundModes -array ios/TgWsProxy/Info.plist || true
           plutil -insert UIBackgroundModes.0 -string "audio" ios/TgWsProxy/Info.plist || true
+          
+          # 3. ХАК: Внедряем генератор бесконечной тишины прямо в точку старта приложения (SwiftUI Lifecycle)
+          cat << 'EOF' > patch_audio.py
+          import os
+
+          app_file = "ios/TgWsProxy/TgWsProxyApp.swift"
+          with open(app_file, "r") as f:
+              content = f.read()
+
+          # Код хака на Swift (Генератор тишины через AVAudioEngine)
+          audio_code = """
+          import AVFoundation
+
+          class SilentAudioEngine {
+              static let shared = SilentAudioEngine()
+              private var engine = AVAudioEngine()
+              private var player = AVAudioPlayerNode()
+              
+              func start() {
+                  let session = AVAudioSession.sharedInstance()
+                  try? session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+                  try? session.setActive(true)
+                  
+                  let srcNode = AVAudioSourceNode { _, _, frameCount, audioBufferList -> OSStatus in
+                      let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
+                      for buffer in ablPointer {
+                          memset(buffer.mData, 0, Int(buffer.mDataByteSize))
+                      }
+                      return noErr
+                  }
+                  
+                  engine.attach(srcNode)
+                  engine.connect(srcNode, to: engine.mainMixerNode, format: nil)
+                  try? engine.start()
+              }
+          }
+          """
+
+          # Вставляем импорт и класс в начало файла
+          content = audio_code + "\\n" + content
+          
+          # Запускаем плеер при инициализации приложения (в init окна)
+          if "init()" in content:
+              content = content.replace("init() {", "init() {\\n        SilentAudioEngine.shared.start()")
+          else:
+              # Если init нет, встраиваем в тело структуры приложения
+              content = content.replace("var body: some Scene {", "init() {\\n        SilentAudioEngine.shared.start()\\n    }\\n    var body: some Scene {")
+
+          with open(app_file, "w") as f:
+              f.write(content)
+          print("Silent Audio Engine successfully injected into Swift!")
+          EOF
+          
+          python3 patch_audio.py
+
 
       - name: Install Rust iOS Target
         run: rustup target add aarch64-apple-ios
