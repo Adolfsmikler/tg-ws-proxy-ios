@@ -37,29 +37,47 @@ jobs:
           # Код хака на Swift (Генератор тишины через AVAudioEngine)
           audio_code = """
           import AVFoundation
-
-          class SilentAudioEngine {
-              static let shared = SilentAudioEngine()
-              private var engine = AVAudioEngine()
-              private var player = AVAudioPlayerNode()
-              
-              func start() {
-                  let session = AVAudioSession.sharedInstance()
-                  try? session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
-                  try? session.setActive(true)
-                  
-                  let srcNode = AVAudioSourceNode { _, _, frameCount, audioBufferList -> OSStatus in
-                      let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
-                      for buffer in ablPointer {
-                          memset(buffer.mData, 0, Int(buffer.mDataByteSize))
-                      }
-                      return noErr
-                  }
-                  
-                  engine.attach(srcNode)
-                  engine.connect(srcNode, to: engine.mainMixerNode, format: nil)
-                  try? engine.start()
-              }
+          class SilentAudioEngine {  
+              static let shared = SilentAudioEngine()  
+              private var engine = AVAudioEngine()  
+            
+              func start() {  
+                  let session = AVAudioSession.sharedInstance()  
+                  try? session.setCategory(.playback, mode: .default, options: [.mixWithOthers])  
+                  try? session.setActive(true)  
+            
+                  NotificationCenter.default.addObserver(self, selector: #selector(handleInterruption),  
+                      name: AVAudioSession.interruptionNotification, object: session)  
+                  NotificationCenter.default.addObserver(self, selector: #selector(handleReset),  
+                      name: AVAudioSession.mediaServicesWereResetNotification, object: session)  
+            
+                  attachAndStart()  
+              }  
+            
+              private func attachAndStart() {  
+                  let srcNode = AVAudioSourceNode { _, _, _, audioBufferList -> OSStatus in  
+                      let abl = UnsafeMutableAudioBufferListPointer(audioBufferList)  
+                      for buffer in abl { memset(buffer.mData, 0, Int(buffer.mDataByteSize)) }  
+                      return noErr  
+                  }  
+                  engine.attach(srcNode)  
+                  engine.connect(srcNode, to: engine.mainMixerNode, format: nil)  
+                  try? engine.start()  
+              }  
+            
+              @objc private func handleInterruption(_ note: Notification) {  
+                  guard let typeValue = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,  
+                        let type = AVAudioSession.InterruptionType(rawValue: typeValue) else { return }  
+                  if type == .ended {  
+                      try? AVAudioSession.sharedInstance().setActive(true)  
+                      attachAndStart() // перезапуск engine  
+                  }  
+              }  
+            
+              @objc private func handleReset(_ note: Notification) {  
+                  engine = AVAudioEngine() // пересобрать граф с нуля  
+                  start()  
+              }  
           }
           """
 
