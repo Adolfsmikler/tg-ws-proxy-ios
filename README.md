@@ -3,7 +3,7 @@
 <h4 align="center">Локальный MTProto-прокси для Telegram на iOS с Rust-ядром, Live Activity и встроенным Silent Audio обходом песочницы. Сборка через GitHub Actions.</h4>
 
 <p align="center">
-  <a href="README_EN.md">English 🌐</a>
+  <a href="docs/README.md">English 🌐</a>
 </p>
 
 <p align="center">
