@@ -1,10 +1,9 @@
 <h1 align="center">TG WS Proxy iOS (Workflow Fix Fork)</h1>
 
-<h4 align="center">Local MTProto proxy for Telegram on iOS featuring a Rust core, WidgetKit, Live Activity, and optional Packet Tunnel. Built via GitHub Actions.</h4>
+<h4 align="center">Local MTProto proxy for Telegram on iOS featuring a Rust core, Live Activity, and an embedded Silent Audio sandbox bypass. Built via GitHub Actions.</h4>
 
 <p align="center">
-  <!-- Исправили ссылку: теперь она четко ведет на главный русский файл в корне -->
-  <a href="../README.md">Русский</a>
+  <a href="README.md">Русский 🇷🇺</a>
 </p>
 
 <p align="center">
@@ -13,7 +12,6 @@
   <img src="https://img.shields.io/badge/Swift-SwiftUI-F05138?style=for-the-badge&logo=swift&logoColor=white" alt="SwiftUI">
   <img src="https://img.shields.io/badge/Core-Rust-000000?style=for-the-badge&logo=rust&logoColor=white" alt="Rust">
 </p>
-
 
 ---
 
@@ -24,87 +22,50 @@ Telegram → 127.0.0.1:1443 → Rust TG WS Proxy → WSS / Cloudflare → Telegr
 ```
 
 > [!CAUTION]
-> **This is an experimental networking tool. It works, but an incorrect Packet Tunnel configuration can completely "kill" the internet connection on your device until you disable the VPN, reinstall the app, or reboot your iPhone. The application has not undergone a security audit. Use it entirely at your own risk and do not install IPAs from untrusted sources.**
+> **This is an experimental networking tool. Use it entirely at your own risk. The application has not undergone a security audit.**
 
 ---
 
 ## 🤖 AI Disclaimer
 > [!NOTE]
-> All build script fixes, Xcode 16.2+ compiler patches, iOS sandbox bypasses, and CI/CD automation setups in this fork were implemented in close collaboration with the **Gemini AI**. While every effort was made to achieve stability, the author is not responsible for any hidden bugs, Rust core memory leaks, or future breakages caused by Apple updates. Use at your own risk!
+> All build script fixes, Xcode 16.2+ compiler patches, iOS sandbox bypasses, and CI/CD automation setups in this fork were implemented in close collaboration with the **Gemini AI**. The author is not responsible for any hidden bugs or future breakages.
 
 ---
 
-## ⚡ Fork Features (Build Fixes)
+## ⚡ Fork Features (What's Fixed)
 This repository fixes critical compilation errors found in the original project under recent Xcode versions (16.2+), removes the breaking `.glassEffect` UI modifier, and adds automated cloud build scripts via **GitHub Actions** without requiring a physical Mac computer.
 
 ---
 
-## ✨ Features
+## 📦 Free Apple ID Sandbox Bypass (Important!)
 
-- Local MTProto proxy powered by Rust;
-- Cloudflare Workers, custom domain, and an updateable domain list;
-- WebSocket pool sizes of `2`, `4`, or `6`;
-- Traffic statistics, pool state, logs, and diagnostics;
-- Optional Liquid Glass toggle;
-- Live Activity and Dynamic Island bundled into a single `la` component;
-- Interactive Home Screen Widget;
-- System toggle for Control Center;
-- App Intents and Siri Shortcuts;
-- Deep links for starting, stopping, and configuring;
-- RU/EN user interface;
-- Automatic fallback to loopback mode if the Packet Tunnel is unavailable.
+In the original project, background execution on a free developer account was impossible because the system VPN (`NetworkExtension`) dropped after 8 seconds due to missing paid signature entitlements [creative-writing-pad].
+
+This fork introduces an **Automated Silent Audio Engine Patch** that completely solves this problem [travel]! When building with the **`-c la`** flag, the script automatically injects an infinite silence generator into the Swift code [travel]. To iOS, the app looks like an active music player, which prevents process suspension and allows the Rust core to run indefinitely [travel]!
+
+### ⚠️ Known Trade-offs & Bugs:
+1. **Increased Battery Drain:** Because the audio engine and Rust core run continuously in the background, your phone will consume battery significantly faster [travel].
+2. **Call Conflicts (Crucial Bug):** Making or receiving a cellular call (or VoIP call in other apps) causes iOS to force-mute our fake audio stream [travel]. **Once the call ends, you must manually restart the proxy (press Stop -> Start)** to restore background privileges.
+3. **Media Conflicts:** Music players (Apple Music, YouTube) might briefly suspend the proxy loop when taking over the audio output [travel].
 
 ---
 
-## 📦 Sideload Restrictions on a Free Apple ID (Important!)
+## 🧬 Origins, Sources and Credits
 
-When attempting to use this app with a free developer account (Free Apple ID) via `iloader` or `Sideloadly`, you will encounter the following iOS sandbox limitations:
+This project is the result of combining, modifying, and fixing a chain of open-source solutions:
 
-1. **App ID Limit (0 available error):** Building a full version with all extensions enabled (`-c wd,la,cc,vpn`) requires registering multiple unique identifiers with Apple. Due to free account constraints, installation may fail. **Solution:** Use a brand-new, clean Apple ID.
-2. **The "8-Second" Issue (VPN Drop):** If you compile the full version using the `vpn` flag, the app will launch successfully, but traffic will completely die after 8–30 seconds. iOS blocks network setting initialization (`NetworkExtension`) for free certificates and drops the socket. Continuous operation in VPN mode on a free account is **only possible by constantly restarting the app manually**.
-3. **Current Experimental Status:** Compiling the project with the **`-c la`** flag (Live Activity) and the background audio player disguise patch (`audio`) allows the app to stay alive longer, but traffic **still eventually fades out and drops** due to aggressive iOS sandbox restrictions on local loopback sockets (`127.0.0.1`). 
-   * *Under development:* We are currently experimenting with a workaround to implement a Swift-based background timer that automatically restarts the socket loop every 7 seconds, preventing iOS from freezing the background connection.
-
-
----
+- [Flowseal/tg-ws-proxy](https://github.com/Flowseal/tg-ws-proxy) — The original concept, the idea of bypassing restrictions via WebSocket, and the baseline proxy core.
+- [amurcanov/tg-ws-proxy-android](https://github.com/amurcanov/tg-ws-proxy-android) — The actively maintained Rust core fork and Android version, used in this project as the upstream repository for automated weekly syncs.
+- [reekeer/tg-ws-proxy-ios](https://github.com/reekeer/tg-ws-proxy-ios) — The original native Swift/SwiftUI graphical wrapper and Apple framework integration.
+-
 
 ## 🚀 Cloud Build (GitHub Actions)
 
-You don't need a Mac or a local Xcode installation. Everything is built in the cloud:
+You don't need a Mac. Everything is built in the cloud:
 1. Navigate to the **Actions** tab of your repository.
-2. Select the **Build iOS IPA** workflow.
-3. Click the **Run workflow** button.
-
-You can customize the build flags inside `.github/workflows/build.yml`:
-- `-c la` — Lightweight stable version featuring Live Activity (Recommended).
-- `-c wd,la,cc,vpn` — Full ultimate version (Requires a paid developer account or TrollStore).
-
-The compiled `.ipa` file will be available for download in the **Artifacts** section once the build successfully finishes.
+2. Select the **Build iOS IPA** workflow and click **Run workflow**.
+3. Download the compiled `.ipa` from the **Artifacts** section and install via `iloader` or `Sideloadly` using the `-p side -c la` configuration [creative-writing-pad].
 
 ---
-
-## 🧬 Origins and Credits
-
-- [Flowseal/tg-ws-proxy](https://github.com/Flowseal/tg-ws-proxy) — Original project and core concept;
-- [amurcanov/tg-ws-proxy-android](https://github.com/amurcanov/tg-ws-proxy-android) — Rust core and Android fork used as upstream;
-- [reekeer/tg-ws-proxy-ios](https://github.com/reekeer/tg-ws-proxy-ios) — Original iOS wrapper and Apple framework integration.
-
----
-
-## 🔗 Deep links
-```text
-tgwsproxy://home
-tgwsproxy://settings
-tgwsproxy://?action=start
-tgwsproxy://?action=stop
-```
-*(The full list of deep links is available in the original project documentation).*
-
----
-
-## ⚖️ Licenses
-
-- This combined project and all modifications are distributed under the [GPLv3](LICENSE) license.
-- Telegram and Apple names are trademarks of their respective owners. This project is not affiliated with Telegram FZ-LLC or Apple Inc.
 
 <p align="center"><sub>Workflow modification and bugfixes prepared by <a href="https://github.com">Adolfsmikler</a></sub></p>
