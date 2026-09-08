@@ -114,7 +114,7 @@ jobs:
       - name: Run Build Script
         env:
           OTHER_SWIFT_FLAGS: "-strict-concurrency=minimal -suppress-warnings"
-        run: ./build.sh -p side -c wd,la,cc,vpn
+        run: ./build.sh -p side -c la
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
