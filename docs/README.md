@@ -68,13 +68,6 @@ This project is the result of combining, modifying, and fixing a chain of open-s
 - [reekeer/tg-ws-proxy-ios](https://github.com/reekeer/tg-ws-proxy-ios) — The original native Swift/SwiftUI graphical wrapper and Apple framework integration.
 -
 
-## 🚀 Cloud Build (GitHub Actions)
-
-You don't need a Mac. Everything is built in the cloud:
-1. Navigate to the **Actions** tab of your repository.
-2. Select the **Build iOS IPA** workflow and click **Run workflow**.
-3. Download the compiled `.ipa` from the **Artifacts** section and install via `iloader` or `Sideloadly` using the `-p side -c la` configuration [creative-writing-pad].
-
 ---
 
 <p align="center"><sub>Workflow modification and bugfixes prepared by <a href="https://github.com">Adolfsmikler</a></sub></p>
