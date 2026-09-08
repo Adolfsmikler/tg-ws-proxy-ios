@@ -70,13 +70,6 @@ Telegram → 127.0.0.1:1443 → Rust TG WS Proxy → WSS / Cloudflare → Telegr
 - [reekeer/tg-ws-proxy-ios](https://github.com/reekeer/tg-ws-proxy-ios) — оригинальная графическая оболочка на Swift/SwiftUI и интеграция нативных фреймворков Apple.
 
 
-## 🚀 Облачная сборка (GitHub Actions)
-
-Вам не нужен Mac. Всё собирается в облаке:
-1. Перейдите во вкладку **Actions** вашего репозитория.
-2. Выберите воркфлоу **Build iOS IPA** и нажмите **Run workflow**.
-3. Скачайте готовый `.ipa` из раздела **Artifacts** и установите через `iloader` или `Sideloadly` на пресете сборки `-p side -c la` [creative-writing-pad].
-
 ---
 
 <p align="center"><sub>Модификацию и исправление воркфлоу подготовил <a href="https://github.com">Adolfsmikler</a></sub></p>
