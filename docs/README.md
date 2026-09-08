@@ -3,7 +3,7 @@
 <h4 align="center">Local MTProto proxy for Telegram on iOS featuring a Rust core, Live Activity, and an embedded Silent Audio sandbox bypass. Built via GitHub Actions.</h4>
 
 <p align="center">
-  <a href="R../README.md">Русский 🇷🇺</a>
+  <a href="../README.md">Русский 🇷🇺</a>
 </p>
 
 <p align="center">
